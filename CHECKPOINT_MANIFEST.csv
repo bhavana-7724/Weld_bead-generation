@@ -1,0 +1,9 @@
+model_identifier,architecture_description,file_format,relative_path,file_exists,file_size_mb,load_test_passed,deployment_status,notes
+M1_DirectCNN,Generative CNN (Direct Condition to RGB),PyTorch (.pt),weld_project/results/phase_v12_finalized_project_stage/checkpoints_used/m1_direct_cnn_final.pt,True,9.07,True,Production Active,Verified working on Windows CPU
+M2_CVAE,Conditional VAE,PyTorch (.pt),weld_project/results/phase_v12_finalized_project_stage/checkpoints_used/m2_cvae_final.pt,True,5.13,True,Comparative Evaluation,
+M3_GCWPGv2,Geometry-Conditioned WPG v2,PyTorch (.pt),weld_project/results/phase_v12_finalized_project_stage/checkpoints_used/m3_gc_wpg_v2_final.pt,True,9.51,True,Comparative Evaluation,
+M4_GeoSDFCVAE,GeoSDF-CVAE,PyTorch (.pt),weld_project/results/phase_v12_finalized_project_stage/checkpoints_used/m4_geosdf_cvae_final.pt,True,5.49,True,Comparative Evaluation,
+M5_cGAN,Conditional GAN,PyTorch (.pt),weld_project/results/phase_v12_finalized_project_stage/checkpoints_used/m5_geometry_cgan_final.pt,True,2.08,True,Comparative Evaluation,
+SVR_Prospective,Multi-Output RBF Support Vector Regression,Scikit-Learn (.pkl),weld_project/models/numerical/prospective_regressor_checkpoint.pkl,True,0.01,True,Production Active,Verified working on Windows CPU
+M6_GFWPGv2_Final,Proposed GF-WPG v2 (Full Dataset),PyTorch (.pt),weld_project/results/phase_v13_a100/checkpoints/gfwpg_v2_final.pt,True,2.05,True,Prototype / Partially Evaluated,
+M6_GFWPGv2_Fold0,Proposed GF-WPG v2 (Fold 0),PyTorch (.pt),weld_project/results/phase_v13_a100/checkpoints/folds/gfwpg_v2_fold_0.pt,True,2.04,True,Prototype / Partially Evaluated,

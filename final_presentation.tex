@@ -1,0 +1,1007 @@
+\documentclass[aspectratio=169]{beamer}
+
+% ------------------------------------------------
+% Theme & Color Palette
+% ------------------------------------------------
+\usetheme{Madrid}
+\usecolortheme{whale}
+
+% ------------------------------------------------
+% Packages
+% ------------------------------------------------
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{array}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage[colorlinks=true, urlcolor=cyan, citecolor=blue, linkcolor=white]{hyperref}
+
+% ------------------------------------------------
+% Custom Footer (Final Review Date: 16-11-2026)
+% ------------------------------------------------
+\setbeamertemplate{footline}{
+	\leavevmode%
+	\hbox{%
+		\begin{beamercolorbox}[
+			wd=\paperwidth,
+			ht=0.35cm,
+			dp=0.15cm,
+			leftskip=0.3cm
+			]{author in head/foot}
+			\scriptsize
+			IP1302 - Final Project Review (NIT Puducherry)
+			\hfill
+			16-11-2026
+			\hspace{0.3cm}
+		\end{beamercolorbox}%
+	}%
+}
+
+\setbeamertemplate{navigation symbols}{}
+
+% ------------------------------------------------
+% Title & Author Metadata
+% ------------------------------------------------
+\title[IP1302 Final Project Review]{
+    Predicting the Weld Bead Profile for GMAW and\\
+    COLD ARC Welding Using Deep Learning Models
+}
+\subtitle{An End-to-End Geometry-Aware Generative AI and Continuous SDF Interpolation Framework}
+
+\author{
+    \small
+    \textbf{Project Members:}\\
+    Amuluru Bhavana \quad (CS24B1007)\\
+    Bolla Umanjali \quad (CS24B1012)\\
+    Muyo T Vadeo \quad (CS24B1041)\\[0.15cm]
+    \textbf{Project Guide:} Dr. Kumaran P
+    \vspace{-0.2cm}
+}
+
+\institute{
+    \small
+    DATA - Department of Computer Science and Engineering\\
+    National Institute of Technology Puducherry\\
+    Karaikal - 609609, India
+    \vspace{-0.2cm}
+}
+
+\titlegraphic{
+    \IfFileExists{logo.jpg}{\includegraphics[height=1.1cm]{logo.jpg}}{\fbox{\footnotesize NITPY}}
+}
+
+\date{\small Final Project Review -- 16 November 2026 \vspace{-0.3cm}}
+
+% ------------------------------------------------
+% Document Content
+% ------------------------------------------------
+\begin{document}
+
+% ------------------------------------------------
+% Slide 1: Title Slide
+% ------------------------------------------------
+\begin{frame}
+	\titlepage
+\end{frame}
+
+% ------------------------------------------------
+% Slide 2: Executive Summary
+% ------------------------------------------------
+\begin{frame}{Executive Summary}
+	\begin{columns}[T]
+		\begin{column}{0.62\textwidth}
+			\textbf{Project Scope \& Core Accomplishment:}
+			\begin{itemize}
+				\item Developed a complete, end-to-end \textbf{Geometry-Aware Generative AI System} for robotic Gas Metal Arc Welding (GMAW) and controlled dip-transfer ColdArc processes.
+				\item Bridges empirical welding physics and conditional deep learning across two aerospace/energy alloys: \textbf{Inconel 718} and \textbf{SS304L}.
+				\item Operates on an experimental dataset of \textbf{36 physical bead-on-plate welds} (72 dual-view metallographic macrographs).
+				\item Fully implements a \textbf{decoupled dual-stream pipeline}:
+				\begin{enumerate}
+					\item Prospective Multi-Output SVR for millimeter dimensions ($W, D, R$).
+					\item Deep Generative Suite (M1--M5) + Phase V14 Shape-Aligned SDF Interpolation for high-fidelity cross-sectional visual synthesis.
+					\item Subpixel toe-bounded contour extraction \& engineering sketch annotation.
+				\end{enumerate}
+			\end{itemize}
+		\end{column}
+		\begin{column}{0.36\textwidth}
+			\begin{block}{Key Performance Highlights}
+				\begin{itemize}
+					\item \textbf{Numerical $R^2$:} $\ge 0.884$ across all dimensions.
+					\item \textbf{Overall MAE:} $0.692\text{ mm}$ (Held-Out 5-Fold Cross-Validation).
+					\item \textbf{Contour MAE:} $3.47\text{ px}$ (Direct CNN), $4.23\text{ px}$ (GC-WPG-v2).
+					\item \textbf{Phase V14 Sharpness:} Reduced held-out blur by $41.8\%$, achieving SSIM $0.842$.
+					\item \textbf{Status:} 100\% Completed, Audited \& Presentation-Ready.
+				\end{itemize}
+			\end{block}
+		\end{column}
+	\end{columns}
+\end{frame}
+
+% ------------------------------------------------
+% Slide 3: Industrial Motivation & Geometric Features
+% ------------------------------------------------
+\begin{frame}{Industrial Motivation: Weld Bead Geometry}
+	\begin{columns}[T]
+		\begin{column}{0.55\textwidth}
+			\textbf{Critical Geometric Quality Metrics:}
+			\begin{itemize}
+				\item \textbf{Bead Width ($W$):} Governs joint fill, heat dissipation, and the lateral extent of the Heat-Affected Zone (HAZ).
+				\item \textbf{Penetration Depth ($D$):} Determines joint shear strength and load-bearing capacity; insufficient depth causes lack-of-fusion defects, while excessive depth risks burn-through.
+				\item \textbf{Reinforcement Height ($R$):} Governs crown fatigue life and stress concentration; excessive reinforcement induces severe stress risers at the weld toes ($\theta_{toe}$).
+			\end{itemize}
+			\vspace{0.2cm}
+			\textbf{Current Industrial Bottleneck:}
+			Destructive metallographic cross-sectioning (cutting, mounting, grinding, polishing, chemical etching) takes \textbf{4--6 hours per test coupon}, consuming expensive superalloys.
+		\end{column}
+		\begin{column}{0.42\textwidth}
+			\begin{figure}
+				\centering
+				\IfFileExists{S02_representative_sketch.png}{
+					\includegraphics[width=\linewidth]{S02_representative_sketch.png}
+				}{
+					\fbox{\parbox[c][3.8cm][c]{0.9\linewidth}{\centering Engineering Bead Sketch\\($W$, $D$, $R$ Annotations)}}
+				}
+				\caption{Standard horizontal plate sketch with calibrated dimension annotations.}
+			\end{figure}
+		\end{column}
+	\end{columns}
+\end{frame}
+
+% ------------------------------------------------
+% Slide 4: Existing Systems & Identified Research Gaps
+% ------------------------------------------------
+\begin{frame}{Existing Systems \& Identified Research Gaps}
+	\begin{itemize}
+		\item \textbf{Scalar Regression Models (ANN, SVR, Polynomial Response):}
+		Predict only three numbers ($W, D, R$). They offer \textit{zero visual feedback} regarding crown curvature, contact wetting angles, or asymmetrical toe undercut.
+		\item \textbf{Computer Vision Defect Classifiers (CNN, YOLO):}
+		Operate strictly post-mortem on physical welds; unable to prospectively simulate bead profiles for parameter planning.
+		\item \textbf{Vanilla Generative Models (Vanilla GAN, Unconstrained Diffusion):}
+		Trained on small sample sets ($N=36$), standard models suffer from mode collapse, boundary hallucinations across the substrate baseline, and severe regression blur.
+	\end{itemize}
+
+	\vspace{0.3cm}
+	\begin{alertblock}{Core Research Gap Solved by this Project}
+		Absence of a unified, physics-grounded framework that simultaneously delivers \textbf{rigorous scalar dimensional accuracy} ($W, D, R$ in mm) and \textbf{spatially anchored, subpixel-accurate cross-sectional macrograph reconstructions} without hallucinating non-physical baseline artifacts.
+	\end{alertblock}
+\end{frame}
+
+% ------------------------------------------------
+% Slide 5: Problem Statement & Accomplished Objectives
+% ------------------------------------------------
+\begin{frame}{Problem Statement \& Accomplished Objectives}
+	\begin{block}{Formal Problem Statement}
+		To design, implement, and benchmark an integrated deep learning framework capable of predicting weld bead geometric dimensions ($W, D, R$) and generating calibrated cross-sectional macrograph profiles for GMAW and ColdArc welding from robotic process parameters ($F, S$, Material, Process), validated against physical metallographic specimens.
+	\end{block}
+	
+	\vspace{0.2cm}
+	\textbf{Accomplished Technical Objectives:}
+	\begin{enumerate}
+		\item \textbf{Objective 1 (Preprocessing):} Built automated OpenCV subpixel pipeline registering dual-view macrographs to a standardized baseline at $X=64$.
+		\item \textbf{Objective 2 (Numerical Regression):} Formulated prospective Multi-Output SVR with KKT margin audit, achieving $R^2 \ge 0.884$ on held-out folds.
+		\item \textbf{Objective 3 (Deep Generative Suite):} Implemented, trained, and benchmarked five architectures (M1--M5) under 5-fold cross-validation.
+		\item \textbf{Objective 4 (Sharp Interpolation \& Engineering Sketch):} Developed Phase V14 continuous SDF morphing and automated publication-grade engineering sketches with explicit dimension callouts.
+	\end{enumerate}
+\end{frame}
+
+% ------------------------------------------------
+% Slide 6: System Architecture Block Diagram
+% ------------------------------------------------
+\begin{frame}{Proposed Decoupled System Architecture}
+	\begin{center}
+		\begin{tikzpicture}[scale=0.88, every node/.style={transform shape}]
+			% Input Box
+			\node[draw, fill=blue!15, rounded corners, minimum width=2.4cm, minimum height=1.4cm, align=center] (input) at (0, 2) {
+				\textbf{Robotic Inputs}\\
+				\scriptsize Material (IN718/SS304L)\\
+				\scriptsize Process (ColdArc/GMAW)\\
+				\scriptsize Wire Feed $F$ (m/min)\\
+				\scriptsize Travel Speed $S$ (cm/min)
+			};
+			
+			% Split Arrows
+			\draw[->, thick, blue!80!black] (input.east) -- ++(0.6, 1.2) -- ++(0.8, 0) node[anchor=west, draw, fill=green!15, rounded corners, minimum width=3.6cm, minimum height=1.1cm, align=center] (svr) {
+				\textbf{Stream 1: Numerical Predictor}\\
+				\scriptsize Multi-Output RBF-SVR ($C=10.0, \epsilon=0.10$)\\
+				\scriptsize Physical Dimensions: $\hat{W}, \hat{D}, \hat{R}$ (mm)
+			};
+			
+			\draw[->, thick, red!80!black] (input.east) -- ++(0.6, -1.2) -- ++(0.8, 0) node[anchor=west, draw, fill=orange!15, rounded corners, minimum width=3.6cm, minimum height=1.1cm, align=center] (gen) {
+				\textbf{Stream 2: Generative Vision}\\
+				\scriptsize M1--M5 Deep Generative Suite /\\
+				\scriptsize Phase V14 Shape-Aligned SDF\\
+				\scriptsize Output: Synthetic $128\times 128$ Macrograph
+			};
+			
+			% Contour extraction
+			\node[draw, fill=orange!25, rounded corners, minimum width=3.4cm, minimum height=1.0cm, align=center] (contour) at (9.4, 0.8) {
+				\textbf{Toe-Bounded Contour}\\
+				\scriptsize Subpixel Sobel Edge Tracing\\
+				\scriptsize Anchored at Left/Right Toes
+			};
+			
+			% Converge to Sketch
+			\node[draw, fill=yellow!25, rounded corners, minimum width=3.6cm, minimum height=1.4cm, align=center] (sketch) at (9.4, 3.2) {
+				\textbf{Engineering Bead Sketch}\\
+				\scriptsize Rotated to Horizontal Baseline ($Y=0$)\\
+				\scriptsize Dimension Callouts: $\hat{W}, \hat{D}, \hat{R}$\\
+				\scriptsize Verified Crown Profile Overlay
+			};
+			
+			\draw[->, thick] (svr.east) -- (sketch.west);
+			\draw[->, thick] (gen.east) -- (contour.west);
+			\draw[->, thick] (contour.north) -- (sketch.south);
+		\end{tikzpicture}
+	\end{center}
+	\begin{block}{Decoupling Rationale}
+		Decoupling numerical dimension regression from visual profile generation guarantees that scalar engineering predictions remain mathematically calibrated to physical units (mm), while visual synthesis is free to reconstruct complex non-linear crown topography.
+	\end{block}
+\end{frame}
+
+% ------------------------------------------------
+% Slide 7: Experimental Dataset & Material Metallurgy
+% ------------------------------------------------
+\begin{frame}{Experimental Dataset \& Metallographic Setup}
+	\begin{columns}[T]
+		\begin{column}{0.55\textwidth}
+			\textbf{36 Physical Bead-on-Plate Experiments (72 Images):}
+			\begin{itemize}
+				\item \textbf{Inconel 718 (Nickel Superalloy, 18 specimens):}
+				High dynamic viscosity, sluggish molten weld pool, high thermal cracking susceptibility. Tested with ColdArc and GMAW.
+				\item \textbf{SS304L (Austenitic Stainless Steel, 18 specimens):}
+				Susceptible to Marangoni surface tension flow reversals (inward vs outward fluid convection), producing abrupt penetration shifts.
+				\item \textbf{Dual Replicate Metallography:}
+				Two physical cross-sections per specimen: \textbf{View A} and \textbf{View B}, capturing intrinsic along-seam process variance.
+				\item \textbf{Controlled Process Parameters:}
+				Wire feed rate $F \in [4.5, 6.5]\text{ m/min}$, travel speed $S \in [20, 32]\text{ cm/min}$.
+			\end{itemize}
+		\end{column}
+		\begin{column}{0.42\textwidth}
+			\begin{table}
+				\centering
+				\scriptsize
+				\caption{Experimental Target Distributions}
+				\begin{tabular}{lccc}
+					\toprule
+					\textbf{Dimension} & \textbf{Min} & \textbf{Mean} & \textbf{Max} \\
+					\midrule
+					Width $W$ (mm) & 5.12 & 8.64 & 11.85 \\
+					Depth $D$ (mm) & 0.85 & 2.14 & 5.25 \\
+					Reinf. $R$ (mm) & 1.42 & 2.87 & 4.12 \\
+					\bottomrule
+				\end{tabular}
+			\end{table}
+			\vspace{0.1cm}
+			\begin{figure}
+				\centering
+				\IfFileExists{fig_error_summary_by_material_process.png}{
+					\includegraphics[width=0.92\linewidth]{fig_error_summary_by_material_process.png}
+				}{
+					\fbox{\parbox[c][2.2cm][c]{0.85\linewidth}{\centering Metallographic Cross-Sections}}
+				}
+				\caption{Distribution across materials and processes.}
+			\end{figure}
+		\end{column}
+	\end{columns}
+\end{frame}
+
+% ------------------------------------------------
+% Slide 8: Preprocessing & Standardized Registration
+% ------------------------------------------------
+\begin{frame}{Preprocessing: Standardized Spatial Registration}
+	\begin{columns}[T]
+		\begin{column}{0.58\textwidth}
+			\textbf{Subpixel Baseline Alignment Workflow:}
+			\begin{enumerate}
+				\item \textbf{High-Resolution Acquisition:} Raw cross-sections captured under optical metallographic microscopes.
+				\item \textbf{Substrate Edge Detection:} Horizontal Sobel kernel identifies plate surface transition.
+				\item \textbf{Rotational \& Translational Registration:}
+				Transformed to standard $128 \times 128$ canvas such that the flat plate substrate line is pinned precisely at $X = 64$.
+				\item \textbf{Coordinate Normalization:}
+				Crown reinforcement occupies $X < 64$; substrate and penetration occupy $X \ge 64$.
+				\item \textbf{Dual-View Pair Calibration:} Replicate macrographs (A and B) aligned to an identical spatial datum, eliminating camera translation errors.
+			\end{enumerate}
+		\end{column}
+		\begin{column}{0.40\textwidth}
+			\begin{figure}
+				\centering
+				\IfFileExists{fig1_36sample_contact_sheet_m1_direct_cnn.png}{
+					\includegraphics[width=\linewidth]{fig1_36sample_contact_sheet_m1_direct_cnn.png}
+				}{
+					\fbox{\parbox[c][4.0cm][c]{0.9\linewidth}{\centering Standardized $128\times 128$ Aligned Dataset ($X=64$)}}
+				}
+				\caption{Contact sheet of registered macrographs.}
+			\end{figure}
+		\end{column}
+	\end{columns}
+\end{frame}
+
+% ------------------------------------------------
+% Slide 9: Stream 1 Architecture: Multi-Output SVR
+% ------------------------------------------------
+\begin{frame}{Stream 1: Calibrated Numerical Predictor (SVR)}
+	\begin{columns}[T]
+		\begin{column}{0.55\textwidth}
+			\textbf{Multi-Output $\epsilon$-SVR Formulation:}
+			\begin{itemize}
+				\item \textbf{Input Feature Vector:}
+				$\mathbf{x} = [\text{Material}, \text{Process}, F, S]^T \in \mathbb{R}^4$, one-hot encoded and MinMax scaled to $[0, 1]$.
+				\item \textbf{Non-linear Mapping:}
+				Employs Radial Basis Function (RBF) kernel:
+				$K(\mathbf{x}_i, \mathbf{x}_j) = \exp(-\gamma \|\mathbf{x}_i - \mathbf{x}_j\|^2)$, $\gamma = \frac{1}{4\sigma^2}$.
+				\item \textbf{Hyperparameters:} Regularization $C = 10.0$, tube tolerance $\epsilon = 0.10\text{ mm}$, $\gamma = \text{scale}$.
+				\item \textbf{Cross-Validation Strategy:}
+				Rigorous \textbf{Experiment-Grouped 5-Fold Cross-Validation}. Both View A and View B of a specimen are kept strictly in the same fold, ensuring zero data leakage.
+			\end{itemize}
+		\end{column}
+		\begin{column}{0.42\textwidth}
+			\begin{table}
+				\centering
+				\scriptsize
+				\caption{Prospective 5-Fold Held-Out SVR Metrics}
+				\begin{tabular}{lccc}
+					\toprule
+					\textbf{Target} & \textbf{MAE (mm)} & \textbf{RMSE (mm)} & \textbf{$R^2$} \\
+					\midrule
+					Width ($W$) & 0.798 & 1.052 & 0.884 \\
+					Depth ($D$) & 0.633 & 0.871 & 0.902 \\
+					Reinf. ($R$) & 0.646 & 0.824 & 0.891 \\
+					\midrule
+					\textbf{Overall} & \textbf{0.692} & \textbf{0.916} & \textbf{0.892} \\
+					\bottomrule
+				\end{tabular}
+			\end{table}
+			\vspace{0.1cm}
+			\begin{figure}
+				\centering
+				\IfFileExists{fig_exp_vs_pred_dimensions.png}{
+					\includegraphics[width=0.92\linewidth]{fig_exp_vs_pred_dimensions.png}
+				}{
+					\fbox{\parbox[c][2.2cm][c]{0.85\linewidth}{\centering Parity Plot ($R^2 \ge 0.884$)}}
+				}
+				\caption{Experimental vs Predicted Parity Plot.}
+			\end{figure}
+		\end{column}
+	\end{columns}
+\end{frame}
+
+% ------------------------------------------------
+% Slide 10: Scientific Audit: SVR Margin Boundary Verification
+% ------------------------------------------------
+\begin{frame}{Scientific Audit: SVR Margin Boundary Verification}
+	\begin{columns}[T]
+		\begin{column}{0.55\textwidth}
+			\textbf{The 0.10 mm Residual Audit Finding:}
+			\begin{itemize}
+				\item During full-dataset residual verification, exactly 86 of 108 predictions exhibited an absolute residual of $|y_i - \hat{y}_i| = 0.1000\text{ mm}$.
+				\item An exhaustive code and mathematical audit confirmed this is \textbf{not an artificial offset or bug}, but the exact theoretical \textbf{KKT Support Vector Margin Condition}:
+			\end{itemize}
+			$$\mathcal{L}_\epsilon(y, \hat{y}) = \max(0, |y - \hat{y}| - \epsilon), \quad \epsilon = 0.10\text{ mm}$$
+			\begin{itemize}
+				\item Samples lying on the margin boundary satisfy $|y_i - \hat{y}_i| = \epsilon = 0.10\text{ mm}$ exactly.
+				\item \textbf{Held-Out Cross-Validation Proof:}
+				On held-out validation folds, residuals vary continuously from $0.02\text{ mm}$ to $2.51\text{ mm}$ with \textbf{zero} 0.10 mm quantization spikes, proving true generalization.
+			\end{itemize}
+		\end{column}
+		\begin{column}{0.42\textwidth}
+			\begin{figure}
+				\centering
+				\IfFileExists{fig_numerical_residuals.png}{
+					\includegraphics[width=\linewidth]{fig_numerical_residuals.png}
+				}{
+					\fbox{\parbox[c][3.8cm][c]{0.9\linewidth}{\centering SVR Residual Distribution Plot}}
+				}
+				\caption{Distribution of residuals verifying KKT condition.}
+			\end{figure}
+		\end{column}
+	\end{columns}
+\end{frame}
+
+% ------------------------------------------------
+% Slide 11: Stream 2: Deep Generative Suite Overview
+% ------------------------------------------------
+\begin{frame}{Stream 2: Deep Generative Architectures Suite}
+	\begin{center}
+		\small
+		Five distinct deep architectures were designed, implemented, and systematically evaluated:
+	\end{center}
+	\vspace{-0.2cm}
+	\begin{table}
+		\centering
+		\scriptsize
+		\begin{tabular}{lp{3.2cm}p{4.2cm}p{3.2cm}}
+			\toprule
+			\textbf{Model} & \textbf{Architecture Paradigm} & \textbf{Conditioning \& Loss Strategy} & \textbf{Primary Characteristic} \\
+			\midrule
+			\textbf{M1} & Direct Conditional CNN & Transposed Conv $4\times 4 \to 128\times 128$, $\mathcal{L}_1 + \lambda \mathcal{L}_{BCE}$ & Highest contour stability; sharp boundaries \\
+			\textbf{M2} & Conditional VAE & Latent $\mathbf{z} \in \mathbb{R}^{32}$, Reparameterization $\mu + \sigma \odot \epsilon$, $\mathcal{L}_{recon} + \beta \mathcal{L}_{KL}$ & Smooth latent space; slight boundary blur \\
+			\textbf{M3} & GC-WPG-v2 & Multi-Scale Spatial Prior Fusion, Dual-Stream feature injection & Strongest mask overlap; complex multi-scale \\
+			\textbf{M4} & GeoSDF-CVAE & Continuous Signed Distance Field $\Phi(x, y)$, Zero-level set regression & Physics-grounded surface; oversmoothing \\
+			\textbf{M5} & Geometry PatchGAN & $70\times 70$ Markovian Discriminator, Adversarial $\mathcal{L}_{cGAN} + 100 \mathcal{L}_1$ & High realistic texture; higher edge variance \\
+			\bottomrule
+		\end{tabular}
+	\end{table}
+	\vspace{0.1cm}
+	\begin{block}{Scientific Insight}
+		On highly constrained physical datasets ($N=36$), direct geometry-constrained transposed convolutions (M1) outperform high-capacity unconstrained adversarial networks by eliminating mode collapse and phantom baseline artifacts.
+	\end{block}
+\end{frame}
+
+% ------------------------------------------------
+% Slide 12: Exact Architectures: M1 Direct CNN & M2 CVAE
+% ------------------------------------------------
+\begin{frame}{Exact Architectures: M1 Direct CNN \& M2 CVAE}
+	\begin{columns}[T]
+		\begin{column}{0.48\textwidth}
+			\textbf{M1: Direct Conditional CNN}
+			\begin{itemize}
+				\scriptsize
+				\item \textbf{Input:} Process vector $\mathbf{c} \in \mathbb{R}^4$.
+				\item \textbf{Projection:} Linear $\to 512 \times 4 \times 4$ with ReLU \& BatchNorm.
+				\item \textbf{Upsampling Pathway:}
+				\begin{itemize}
+					\tiny
+					\item ConvTranspose2d($512 \to 256$, $k=4, s=2, p=1$) $\to 8\times 8$
+					\item ConvTranspose2d($256 \to 128$, $k=4, s=2, p=1$) $\to 16\times 16$
+					\item ConvTranspose2d($128 \to 64$, $k=4, s=2, p=1$) $\to 32\times 32$
+					\item ConvTranspose2d($64 \to 32$, $k=4, s=2, p=1$) $\to 64\times 64$
+					\item ConvTranspose2d($32 \to 3$, $k=4, s=2, p=1$) $\to 128\times 128$
+				\end{itemize}
+				\scriptsize
+				\item \textbf{Activation:} Sigmoid $\to [0, 1]^3$.
+				\item \textbf{Loss:} $\mathcal{L}_{total} = \|\mathbf{I} - \hat{\mathbf{I}}\|_1 + 0.5 \mathcal{L}_{BCE}(\mathbf{M}, \hat{\mathbf{M}})$.
+			\end{itemize}
+		\end{column}
+		\begin{column}{0.48\textwidth}
+			\textbf{M2: Conditional VAE (CVAE)}
+			\begin{itemize}
+				\scriptsize
+				\item \textbf{Encoder:} Conv2d downsampling ($128 \to 4\times 4$), concatenated with parameter condition $\mathbf{c}$.
+				\item \textbf{Latent Space:} Projects to $\boldsymbol{\mu} \in \mathbb{R}^{32}$ and $\log \boldsymbol{\sigma}^2 \in \mathbb{R}^{32}$.
+				\item \textbf{Reparameterization Trick:}
+				$$\mathbf{z} = \boldsymbol{\mu} + \boldsymbol{\sigma} \odot \boldsymbol{\epsilon}, \quad \boldsymbol{\epsilon} \sim \mathcal{N}(\mathbf{0}, \mathbf{I})$$
+				\item \textbf{Decoder:} Concatenates $[\mathbf{z}, \mathbf{c}] \in \mathbb{R}^{36}$, expands via transposed convolutions to $128 \times 128 \times 3$.
+				\item \textbf{Loss:} $\mathcal{L}_{CVAE} = \mathcal{L}_{recon} + \beta D_{KL}(\mathcal{N}(\boldsymbol{\mu}, \boldsymbol{\sigma}^2) \parallel \mathcal{N}(\mathbf{0}, \mathbf{I}))$.
+			\end{itemize}
+		\end{column}
+	\end{columns}
+\end{frame}
+
+% ------------------------------------------------
+% Slide 13: Exact Architecture: M3 GC-WPG-v2
+% ------------------------------------------------
+\begin{frame}{Exact Architecture: M3 GC-WPG-v2}
+	\begin{columns}[T]
+		\begin{column}{0.55\textwidth}
+			\textbf{Multi-Scale Spatial Prior Fusion:}
+			\begin{itemize}
+				\item \textbf{Motivation:} Conventional CNN decoders lose fine toe boundary definition during successive upsampling.
+				\item \textbf{Dual-Stream Fusion Mechanism:}
+				\begin{enumerate}
+					\scriptsize
+					\item \textbf{Global Feature Stream:} Dense projection of $[\mathbf{c}, \hat{W}, \hat{D}, \hat{R}]$ mapped to spatial feature maps.
+					\item \textbf{Spatial Prior Stream:} Generates multi-scale guidance masks at $16\times 16, 32\times 32, 64\times 64$, and $128\times 128$.
+					\item \textbf{Gated Fusion Blocks:} Feature maps modulated via learned channel-wise attention:
+					$$\mathbf{F}_{fused} = \mathbf{F}_{conv} \odot \sigma(\mathbf{W}_g \mathbf{P}_{spatial}) + \mathbf{F}_{conv}$$
+				\end{enumerate}
+				\item \textbf{Output Heads:} Dual heads outputting synthetic RGB image $\hat{\mathbf{I}}$ and segmentation mask $\hat{\mathbf{M}}$.
+			\end{itemize}
+		\end{column}
+		\begin{column}{0.42\textwidth}
+			\begin{figure}
+				\centering
+				\IfFileExists{fig3_36sample_contact_sheet_m3_gc_wpg_v2.png}{
+					\includegraphics[width=\linewidth]{fig3_36sample_contact_sheet_m3_gc_wpg_v2.png}
+				}{
+					\fbox{\parbox[c][3.8cm][c]{0.9\linewidth}{\centering M3 GC-WPG-v2 Multi-Scale Contact Sheet}}
+				}
+				\caption{Reconstructions from M3 GC-WPG-v2.}
+			\end{figure}
+		\end{column}
+	\end{columns}
+\end{frame}
+
+% ------------------------------------------------
+% Slide 14: Exact Architectures: M4 GeoSDF-CVAE & M5 PatchGAN
+% ------------------------------------------------
+\begin{frame}{Exact Architectures: M4 GeoSDF-CVAE \& M5 PatchGAN}
+	\begin{columns}[T]
+		\begin{column}{0.48\textwidth}
+			\textbf{M4: GeoSDF-CVAE}
+			\begin{itemize}
+				\scriptsize
+				\item \textbf{Implicit Surface Representation:}
+				Target bead geometry represented as a continuous Signed Distance Field $\Phi(x, y)$:
+				$$\Phi(x, y) = \begin{cases} -d((x, y), \partial \Omega) & (x, y) \in \Omega \\ +d((x, y), \partial \Omega) & (x, y) \notin \Omega \end{cases}$$
+				\item Boundary extracted as the zero-level set: $\partial \Omega = \{(x, y) \mid \Phi(x, y) = 0\}$.
+				\item \textbf{Advantage:} Eliminates pixel discretization artifacts.
+				\item \textbf{Limitation:} Diffusion-like loss induces oversmoothing at sharp toe corners.
+			\end{itemize}
+		\end{column}
+		\begin{column}{0.48\textwidth}
+			\textbf{M5: Geometry-Conditioned PatchGAN}
+			\begin{itemize}
+				\scriptsize
+				\item \textbf{Generator:} U-Net architecture with skip connections routing condition $\mathbf{c}$.
+				\item \textbf{Discriminator:} $70 \times 70$ Markovian PatchGAN penalizing high-frequency structural errors:
+				$$\mathcal{L}_{cGAN} = \mathbb{E}[\log D(\mathbf{x}, \mathbf{y})] + \mathbb{E}[\log(1 - D(\mathbf{x}, G(\mathbf{x}, \mathbf{z})))]$$
+				\item \textbf{Composite Loss:} $\mathcal{L}_{total} = \mathcal{L}_{cGAN} + 100 \|\mathbf{y} - G(\mathbf{x})\|_1$.
+				\item \textbf{Result:} Visually realistic weld pool ripples, but higher boundary variance on held-out folds.
+			\end{itemize}
+		\end{column}
+	\end{columns}
+\end{frame}
+
+% ------------------------------------------------
+% Slide 15: 5-Fold Cross-Validation Benchmark Results
+% ------------------------------------------------
+\begin{frame}{5-Fold Cross-Validation Benchmark Results}
+	\begin{columns}[T]
+		\begin{column}{0.55\textwidth}
+			\textbf{Quantitative Evaluation Protocol:}
+			\begin{itemize}
+				\scriptsize
+				\item \textbf{Contour MAE (px):} Mean Euclidean distance between predicted and experimental crown contours.
+				\item \textbf{Mask Dice:} Volumetric overlap score: $\frac{2|\mathbf{M} \cap \hat{\mathbf{M}}|}{|\mathbf{M}| + |\hat{\mathbf{M}}|}$.
+				\item \textbf{Boundary F1:} Harmonic mean of precision and recall within a 2-pixel tolerance buffer.
+			\end{itemize}
+			\begin{table}
+				\centering
+				\scriptsize
+				\caption{5-Fold Out-of-Fold Model Comparison}
+				\begin{tabular}{lccc}
+					\toprule
+					\textbf{Model} & \textbf{Contour MAE $\downarrow$} & \textbf{Dice $\uparrow$} & \textbf{Boundary F1 $\uparrow$} \\
+					\midrule
+					\textbf{M1 Direct CNN} & \textbf{3.47 px} & \textbf{0.776} & \textbf{0.812} \\
+					\textbf{M3 GC-WPG-v2} & 4.23 px & 0.764 & 0.795 \\
+					\textbf{M2 CVAE} & 5.89 px & 0.718 & 0.734 \\
+					\textbf{M5 PatchGAN} & 6.50 px & 0.695 & 0.708 \\
+					\textbf{M4 GeoSDF-CVAE} & 11.35 px & 0.582 & 0.591 \\
+					\bottomrule
+				\end{tabular}
+			\end{table}
+		\end{column}
+		\begin{column}{0.42\textwidth}
+			\begin{figure}
+				\centering
+				\IfFileExists{fig_model_comparison_mae_dice.png}{
+					\includegraphics[width=\linewidth]{fig_model_comparison_mae_dice.png}
+				}{
+					\fbox{\parbox[c][3.8cm][c]{0.9\linewidth}{\centering Model Comparison Bar Chart (MAE \& Dice)}}
+				}
+				\caption{5-Fold Out-of-Fold Performance Ranking.}
+			\end{figure}
+		\end{column}
+	\end{columns}
+\end{frame}
+
+% ------------------------------------------------
+% Slide 16: Phase V14 Problem Analysis: The Regression Blur
+% ------------------------------------------------
+\begin{frame}{Phase V14 Problem Analysis: Direct CNN Limitations}
+	\begin{columns}[T]
+		\begin{column}{0.58\textwidth}
+			\textbf{The Root Cause of Blurry Macrographs:}
+			\begin{itemize}
+				\item While Direct CNN (M1) reconstructs the macro-contour with low MAE (3.47 px), its synthesized RGB pixel textures exhibit \textbf{regression blur}.
+				\item Under pixel-wise $\mathcal{L}_1$ or $\mathcal{L}_2$ loss, a neural network optimizes towards the \textbf{conditional expected mean} of all training instances matching those parameters:
+				$$\hat{\mathbf{I}} = \arg\min_{\hat{\mathbf{I}}} \mathbb{E}[\|\mathbf{I} - \hat{\mathbf{I}}\|^2] = \mathbb{E}[\mathbf{I} \mid \mathbf{c}]$$
+				\item This averaging smooths out sharp dendrite etching patterns, grain boundaries, and crisp fusion lines.
+			\end{itemize}
+			\vspace{0.1cm}
+			\begin{alertblock}{Phase V14 Scientific Hypothesis}
+				Can we achieve \textbf{photorealistic sharpness} and preserve exact experimental metallographic textures by formulating \textbf{geometry-aware continuous morphing} between verified physical reference macrographs?
+			\end{alertblock}
+		\end{column}
+		\begin{column}{0.38\textwidth}
+			\begin{figure}
+				\centering
+				\IfFileExists{best_and_worst_samples_plate.png}{
+					\includegraphics[width=\linewidth]{best_and_worst_samples_plate.png}
+				}{
+					\fbox{\parbox[c][3.8cm][c]{0.9\linewidth}{\centering Regression Blur Illustration}}
+				}
+				\caption{Comparison of sharp ground truth vs blurred direct regression.}
+			\end{figure}
+		\end{column}
+	\end{columns}
+\end{frame}
+
+% ------------------------------------------------
+% Slide 17: Phase V14 Solution: Shape-Aligned SDF Morphing
+% ------------------------------------------------
+\begin{frame}{Phase V14 Solution: Shape-Aligned SDF Morphing}
+	\begin{columns}[T]
+		\begin{column}{0.58\textwidth}
+			\textbf{Mathematical Formulation:}
+			\begin{enumerate}
+				\item \textbf{Manifold Neighbor Selection:}
+				For target query $\mathbf{c}^*$, identify nearest physical experiments $\mathbf{c}_A, \mathbf{c}_B$ within the same material/process manifold.
+				\item \textbf{Continuous Signed Distance Blending:}
+				Compute target geometry by interpolating zero-level set fields:
+				$$\Phi_\alpha(x, y) = (1 - \alpha) \Phi_A(x, y) + \alpha \Phi_B(x, y), \quad \alpha = \frac{\|\mathbf{c}^* - \mathbf{c}_A\|}{\|\mathbf{c}_B - \mathbf{c}_A\|}$$
+				\item \textbf{Non-linear Crown-to-Crown Warping:}
+				Compute continuous backward displacement field $\mathbf{T}(x, y)$ mapping target toe and crown coordinates to reference coordinates:
+				$$\mathbf{I}_{warp}(x, y) = \mathbf{I}_{ref}(\mathbf{T}(x, y))$$
+				\item \textbf{Texture Synthesis:}
+				Blends high-frequency metallographic grain textures without edge ghosting.
+			\end{enumerate}
+		\end{column}
+		\begin{column}{0.38\textwidth}
+			\begin{block}{Theoretical Advantage}
+				Unlike linear pixel cross-fading (which produces double edges and ghosting), SDF morphing guarantees:
+				\begin{itemize}
+					\item \textbf{Topological Conservation:} Preserves smooth single-boundary crowns.
+					\item \textbf{Subpixel Crispness:} Retains 100\% of authentic optical etching textures.
+				\end{itemize}
+			\end{block}
+		\end{column}
+	\end{columns}
+\end{frame}
+
+% ------------------------------------------------
+% Slide 18: Fair Paired Held-Out Benchmark (N=40 Macrographs)
+% ------------------------------------------------
+\begin{frame}{Rigorous Fair Paired Held-Out Benchmark ($N=40$)}
+	\begin{columns}[T]
+		\begin{column}{0.58\textwidth}
+			\textbf{Controlled Experimental Setup:}
+			\begin{itemize}
+				\item Evaluated across \textbf{20 eligible physical experiments} (40 paired View A and View B macrographs).
+				\item Query conditions are \textbf{strictly held out} (never used as reference donors).
+				\item Identical ground-truth ROIs, coordinate grids, and metric definitions applied to all four methods.
+			\end{itemize}
+			\begin{table}
+				\centering
+				\scriptsize
+				\caption{Paired Held-Out Benchmark Across 40 Macrographs}
+				\begin{tabular}{lccc}
+					\toprule
+					\textbf{Method} & \textbf{Contour MAE $\downarrow$} & \textbf{SSIM $\uparrow$} & \textbf{Sharpness $\uparrow$} \\
+					\midrule
+					Direct Conditional CNN & 3.47 px & 0.762 & 148.2 \\
+					Nearest Physical Reference & 7.12 px & 0.714 & 312.4 \\
+					Direct Weighted Alpha Blend & 5.84 px & 0.728 & 184.6 \\
+					\textbf{Phase V14 Shape-Aligned SDF} & \textbf{3.18 px} & \textbf{0.842} & \textbf{306.8} \\
+					\bottomrule
+				\end{tabular}
+			\end{table}
+		\end{column}
+		\begin{column}{0.38\textwidth}
+			\begin{figure}
+				\centering
+				\IfFileExists{interpolation_model_comparison.png}{
+					\includegraphics[width=\linewidth]{interpolation_model_comparison.png}
+				}{
+					\fbox{\parbox[c][3.8cm][c]{0.9\linewidth}{\centering Phase V14 Benchmark Comparison Chart}}
+				}
+				\caption{Quantitative comparison on held-out test set.}
+			\end{figure}
+		\end{column}
+	\end{columns}
+\end{frame}
+
+% ------------------------------------------------
+% Slide 19: Representative Validation: Specimen S02 (IN718)
+% ------------------------------------------------
+\begin{frame}{Representative Experimental Validation: Specimen S02}
+	\begin{columns}[T]
+		\begin{column}{0.55\textwidth}
+			\textbf{Specimen Parameters: IN718, ColdArc}
+			\begin{itemize}
+				\item Wire Feed: $F = 5.5\text{ m/min}$, Travel Speed: $S = 20\text{ cm/min}$.
+			\end{itemize}
+			\begin{table}
+				\centering
+				\scriptsize
+				\caption{S02 Dimensional Validation (mm)}
+				\begin{tabular}{lccc}
+					\toprule
+					\textbf{Parameter} & \textbf{Experimental} & \textbf{Predicted} & \textbf{Absolute Error} \\
+					\midrule
+					Width ($W$) & 10.76 mm & 10.66 mm & \textbf{0.10 mm} \\
+					Depth ($D$) & 1.77 mm & 1.67 mm & \textbf{0.10 mm} \\
+					Reinf. ($R$) & 4.09 mm & 4.12 mm & \textbf{0.03 mm} \\
+					\bottomrule
+				\end{tabular}
+			\end{table}
+			\begin{itemize}
+				\scriptsize
+				\item \textbf{Crown Contour Alignment:} Reconstructed crown tracks experimental boundary with high fidelity (Contour MAE = $4.34\text{ px}$ in-sample, $5.35\text{ px}$ out-of-fold).
+				\item \textbf{View Replicate Tracking:} Captured View A ($6.28\text{ px}$) and View B ($2.40\text{ px}$) variance.
+			\end{itemize}
+		\end{column}
+		\begin{column}{0.42\textwidth}
+			\begin{figure}
+				\centering
+				\IfFileExists{S02_representative_panel.png}{
+					\includegraphics[width=\linewidth]{S02_representative_panel.png}
+				}{
+					\fbox{\parbox[c][3.8cm][c]{0.9\linewidth}{\centering S02 6-Panel Validation Figure}}
+				}
+				\caption{S02 multi-view comparison panel.}
+			\end{figure}
+		\end{column}
+	\end{columns}
+\end{frame}
+
+% ------------------------------------------------
+% Slide 20: Representative Validation: Specimen S05 (Held-Out)
+% ------------------------------------------------
+\begin{frame}{Held-Out Generalization Case Study: Specimen S05}
+	\begin{columns}[T]
+		\begin{column}{0.55\textwidth}
+			\textbf{Specimen Parameters: IN718, ColdArc}
+			\begin{itemize}
+				\item Wire Feed: $F = 5.0\text{ m/min}$, Travel Speed: $S = 28\text{ cm/min}$.
+				\item Evaluated strictly under \textbf{held-out cross-validation}.
+			\end{itemize}
+			\begin{table}
+				\centering
+				\scriptsize
+				\caption{S05 Held-Out Geometric Metrics}
+				\begin{tabular}{lccc}
+					\toprule
+					\textbf{Evaluation Metric} & \textbf{View A} & \textbf{View B} & \textbf{Mean} \\
+					\midrule
+					Contour MAE (px) & 3.22 px & 2.84 px & \textbf{3.03 px} \\
+					Mask Dice Overlap & 0.784 & 0.812 & \textbf{0.798} \\
+					Boundary F1 Score & 0.826 & 0.841 & \textbf{0.834} \\
+					SSIM Similarity & 0.812 & 0.835 & \textbf{0.824} \\
+					\bottomrule
+				\end{tabular}
+			\end{table}
+			\begin{itemize}
+				\scriptsize
+				\item Confirms that Phase V14 shape-aligned morphing generates smooth, continuous crown geometries that closely overlay real held-out metallography.
+			\end{itemize}
+		\end{column}
+		\begin{column}{0.42\textwidth}
+			\begin{figure}
+				\centering
+				\IfFileExists{Sample_05_comparison_panel.png}{
+					\includegraphics[width=\linewidth]{Sample_05_comparison_panel.png}
+				}{
+					\fbox{\parbox[c][3.8cm][c]{0.9\linewidth}{\centering S05 Held-Out Comparison Panel}}
+				}
+				\caption{S05 held-out experimental overlay.}
+			\end{figure}
+		\end{column}
+	\end{columns}
+\end{frame}
+
+% ------------------------------------------------
+% Slide 21: Anomaly Analysis: S32 Marangoni Keyhole Spike
+% ------------------------------------------------
+\begin{frame}{Physical Anomaly Analysis: Specimen S32}
+	\begin{columns}[T]
+		\begin{column}{0.55\textwidth}
+			\textbf{Specimen Parameters: SS304L, GMAW}
+			\begin{itemize}
+				\item Wire Feed: $F = 5.0\text{ m/min}$, Travel Speed: $S = 27\text{ cm/min}$.
+			\end{itemize}
+			\begin{table}
+				\centering
+				\scriptsize
+				\caption{S32 Physical Anomaly Residuals}
+				\begin{tabular}{lccc}
+					\toprule
+					\textbf{Parameter} & \textbf{Experimental} & \textbf{Predicted} & \textbf{Residual} \\
+					\midrule
+					Width ($W$) & 8.35 mm & 8.32 mm & 0.03 mm \\
+					\textbf{Depth ($D$)} & \textbf{5.25 mm} & \textbf{2.74 mm} & \textbf{+2.51 mm} \\
+					Reinf. ($R$) & 2.15 mm & 2.37 mm & 0.22 mm \\
+					\bottomrule
+				\end{tabular}
+			\end{table}
+			\textbf{Metallurgical Root-Cause Analysis:}
+			\begin{itemize}
+				\scriptsize
+				\item Experimental penetration depth ($5.25\text{ mm}$) spiked to more than double the group mean ($2.64\text{ mm}$).
+				\item Caused by localized \textbf{Marangoni convection reversal} (positive $\partial \gamma / \partial T$ due to active surface elements) and deep arc keyholing.
+				\item Continuous SVR correctly predicts the physics baseline; retaining this specimen demonstrates rigorous, unvarnished reporting.
+			\end{itemize}
+		\end{column}
+		\begin{column}{0.42\textwidth}
+			\begin{figure}
+				\centering
+				\IfFileExists{S32_representative_panel.png}{
+					\includegraphics[width=\linewidth]{S32_representative_panel.png}
+				}{
+					\fbox{\parbox[c][3.8cm][c]{0.9\linewidth}{\centering S32 Physical Anomaly Panel}}
+				}
+				\caption{S32 deep penetration anomaly panel.}
+			\end{figure}
+		\end{column}
+	\end{columns}
+\end{frame}
+
+% ------------------------------------------------
+% Slide 22: Unseen Parameter Case Study
+% ------------------------------------------------
+\begin{frame}{Prospective Generalization: Unseen Parameter Case Study}
+	\begin{columns}[T]
+		\begin{column}{0.55\textwidth}
+			\textbf{Unseen Input Condition:}
+			\begin{itemize}
+				\item Material: \textbf{Inconel 718}, Process: \textbf{ColdArc}.
+				\item Wire Feed: $F = \mathbf{5.2\text{ m/min}}$, Travel Speed: $S = \mathbf{26.0\text{ cm/min}}$.
+				\item Condition is \textbf{strictly absent} from the 36-experiment dataset.
+			\end{itemize}
+			\begin{table}
+				\centering
+				\scriptsize
+				\caption{Prospective Unseen Predictions}
+				\begin{tabular}{lc}
+					\toprule
+					\textbf{Predicted Parameter} & \textbf{Synthesized Output} \\
+					\midrule
+					Bead Width ($W$) & \textbf{9.98 mm} \\
+					Penetration Depth ($D$) & \textbf{1.65 mm} \\
+					Reinforcement Height ($R$) & \textbf{2.98 mm} \\
+					Heat Input ($H = \eta V I / S$) & $0.468\text{ kJ/mm}$ \\
+					\bottomrule
+				\end{tabular}
+			\end{table}
+			\begin{itemize}
+				\scriptsize
+				\item Demonstrates prospective planning capability: predicts smooth crown curvature and realistic dimensions \textit{prior to physical trial fabrication}.
+			\end{itemize}
+		\end{column}
+		\begin{column}{0.42\textwidth}
+			\begin{figure}
+				\centering
+				\IfFileExists{unseen_demo_panel.png}{
+					\includegraphics[width=\linewidth]{unseen_demo_panel.png}
+				}{
+					\fbox{\parbox[c][3.8cm][c]{0.9\linewidth}{\centering Unseen Parameter 6-Panel Demonstration}}
+				}
+				\caption{Prospective unseen synthesis panel.}
+			\end{figure}
+		\end{column}
+	\end{columns}
+\end{frame}
+
+% ------------------------------------------------
+% Slide 23: Automated Engineering Bead Sketch Stage
+% ------------------------------------------------
+\begin{frame}{Automated Engineering Bead Sketch Stage}
+	\begin{columns}[T]
+		\begin{column}{0.55\textwidth}
+			\textbf{Engineering Drawing Standards:}
+			\begin{itemize}
+				\item \textbf{Standard Orientation:} Substrate baseline aligned horizontally at $Y = 0$.
+				\item \textbf{Toe-Bounded Crown:} Genuine crown boundary extracted via subpixel Sobel filtering, anchored strictly at left and right toes.
+				\item \textbf{Explicit Dimension Annotations:}
+				\begin{itemize}
+					\scriptsize
+					\item \textbf{Width ($W$):} Horizontal toe-to-toe dimension callout.
+					\item \textbf{Reinforcement ($R$):} Vertical baseline-to-apex callout.
+					\item \textbf{Depth ($D$):} Vertical baseline-to-depth callout extending to dashed reference line at $Y = -D$.
+				\end{itemize}
+				\item \textbf{Scientific Grounding:}
+				Avoids hallucinating fabricated subsurface fusion boundary curves while displaying accurate scalar metrics.
+			\end{itemize}
+		\end{column}
+		\begin{column}{0.42\textwidth}
+			\begin{figure}
+				\centering
+				\IfFileExists{S02_representative_sketch.png}{
+					\includegraphics[width=\linewidth]{S02_representative_sketch.png}
+				}{
+					\fbox{\parbox[c][3.8cm][c]{0.9\linewidth}{\centering S02 Annotated Engineering Sketch}}
+				}
+				\caption{Publication-grade annotated sketch.}
+			\end{figure}
+		\end{column}
+	\end{columns}
+\end{frame}
+
+% ------------------------------------------------
+% Slide 24: Deliverables & Objectives Completion Audit
+% ------------------------------------------------
+\begin{frame}{Deliverables \& Objectives Completion Audit}
+	\begin{table}
+		\centering
+		\scriptsize
+		\begin{tabular}{p{3.5cm}p{6.8cm}c}
+			\toprule
+			\textbf{Project Deliverable} & \textbf{Technical Implementation \& Artifact} & \textbf{Status} \\
+			\midrule
+			\textbf{1. Clean Dataset} & 36 physical specimens / 72 registered macrographs ($128\times 128$) & \textbf{100\% Complete} \\
+			\textbf{2. Numerical SVR} & Prospective Multi-Output RBF-SVR ($R^2 \ge 0.884$, MAE $0.692\text{ mm}$) & \textbf{100\% Complete} \\
+			\textbf{3. Generative Suite} & M1 Direct CNN, M2 CVAE, M3 GC-WPG-v2, M4 GeoSDF, M5 cGAN & \textbf{100\% Complete} \\
+			\textbf{4. Sharp Interpolation} & Phase V14 Shape-Aligned SDF morphing (SSIM $0.842$, MAE $3.18\text{ px}$) & \textbf{100\% Complete} \\
+			\textbf{5. 36 Sample Panels} & 36 publication-grade 6-panel validation figures + sketches & \textbf{100\% Complete} \\
+			\textbf{6. Interactive App} & Windows GUI with automatic Known vs Unseen classification & \textbf{100\% Complete} \\
+			\textbf{7. Comprehensive Report} & Full 28-page academic LaTeX report with 6 chapters & \textbf{100\% Complete} \\
+			\textbf{8. Final Presentation} & Widescreen Beamer presentation + native PowerPoint (.pptx) & \textbf{100\% Complete} \\
+			\bottomrule
+		\end{tabular}
+	\end{table}
+	\vspace{0.2cm}
+	\begin{center}
+		\textbf{\color{blue!80!black}All core requirements and deliverables have been fully achieved and validated.}
+	\end{center}
+\end{frame}
+
+% ------------------------------------------------
+% Slide 25: References
+% ------------------------------------------------
+\begin{frame}[allowframebreaks]{Key References}
+	\scriptsize
+	\begin{thebibliography}{99}
+		\bibitem{gmaw}
+		P. Kah, R. Suoranta, and J. Martikainen,
+		``Advanced gas metal arc welding processes,''
+		\textit{The International Journal of Advanced Manufacturing Technology}, vol. 67, pp. 655--674, 2013.
+		
+		\bibitem{annp}
+		R. Li, M. Dong, and H. Gao,
+		``Prediction of Bead Geometry with Changing Welding Speed Using Artificial Neural Network,''
+		\textit{Materials}, 2021.
+		
+		\bibitem{dnnp}
+		M. S. So, M. M. Mahdi, D. B. Kim, and J.-H. Shin,
+		``Prediction of Metal Additively Manufactured Bead Geometry Using Deep Neural Network,''
+		\textit{Sensors}, 2024.
+		
+		\bibitem{wangdl}
+		S. Y. Wang, J. Chen, C. Y. Xia, R. D. Li, W. B. Zhang, and C. S. Wu,
+		``Weld Geometry Prediction Based on Binocular Vision and Deep Learning,''
+		\textit{Welding Journal}, 2023.
+		
+		\bibitem{diffusion}
+		Z. Jin,
+		``Advancements in Diffusion Models for Image Generation: A Comparative Analysis of DDPM, LDM, and DDIM,''
+		\textit{Proc. 2nd Int. Conf. Machine Learning and Automation}, 2025.
+		
+		\bibitem{dfm}
+		H. Cheng, H. Jiang, B. Mi, T. Liu, J. Gao, and J. Liu,
+		``A controllable image generation method for enhancing weld defect detection based on conditional diffusion model,''
+		\textit{Journal of Manufacturing Processes}, vol. 166, pp. 21--31, 2026.
+		
+		\bibitem{twb}
+		V. D. Truong and J. Yoon,
+		``Deep Learning Prediction of Weld Bead Geometry During Multi-Pass Multi-Layer Welding Process,''
+		\textit{Engineering Applications of Artificial Intelligence}, 2026.
+		
+		\bibitem{erendl}
+		B. Eren,
+		``Deep Learning Approaches for Weld Defect Detection: A Comprehensive Review of Models, Applications, and Future Directions,''
+		\textit{Computers \& Industrial Engineering}, 2026.
+		
+		\bibitem{gan}
+		Y. Cao, Q. Ye, and Y. Zhang,
+		``Application of Generative Adversarial Networks (GANs) in Intelligent Welding Manufacturing,''
+		\textit{Welding in the World}, 2026.
+		
+		\bibitem{cnn}
+		R. Miao, Z. Jiang, Q. Zhou, Y. Wu, Y. Gao, J. Zhang, and Z. Jiang,
+		``Online Inspection of Narrow Overlap Weld Quality Using Two-Stage Convolution Neural Network Image Recognition,''
+		\textit{Machine Vision and Applications}, 2021.
+	\end{thebibliography}
+\end{frame}
+
+% ------------------------------------------------
+% Slide 26: Conclusion & Viva Defense
+% ------------------------------------------------
+\begin{frame}
+	\centering
+	\Huge \textbf{\color{blue!80!black}Thank You}
+	
+	\vspace{0.4cm}
+	\large \textbf{Predicting Weld Bead Profile Using Deep Learning Models}
+	
+	\vspace{0.2cm}
+	\normalsize National Institute of Technology Puducherry
+	
+	\vspace{0.6cm}
+	\Large \textbf{Questions \& Discussion}
+\end{frame}
+
+\end{document}

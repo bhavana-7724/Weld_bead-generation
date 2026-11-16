@@ -1,0 +1,1 @@
+{"rgb_mean":[0.6135295033,0.6099190712,0.6007927656],"rgb_std":[0.1017246321,0.0992613286,0.0950438008],"grayscale_mean":0.6080734134,"grayscale_std":0.0988763198,"train_image_count":64,"holdout_image_count":8,"holdout_samples":[5,14,22,32]}

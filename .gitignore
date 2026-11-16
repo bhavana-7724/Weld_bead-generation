@@ -1,0 +1,182 @@
+# ==============================================================================
+# .gitignore: weld-bead-geometry-prediction
+# Machine Learning & Scientific Computing Repository
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# Byte-compiled / optimized / DLL files
+# ------------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.dylib
+*.dll
+
+# ------------------------------------------------------------------------------
+# Caches & Environments
+# ------------------------------------------------------------------------------
+.Python
+env/
+venv/
+.venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.pytest_cache/
+.ipynb_checkpoints/
+
+# ------------------------------------------------------------------------------
+# Machine Learning Model Checkpoints & Large Binary Weights (> 5.4 GB total)
+# ------------------------------------------------------------------------------
+*.pt
+*.pth
+*.pwf
+*.ckpt
+*.bin
+*.h5
+*.hdf5
+*.keras
+*.pb
+*.onnx
+*.pkl
+*.pickle
+*.joblib
+*.data-00000-of-00001
+*.index
+models/ddpm/*.pt
+models/generative/*.pt
+models/numerical/*.pkl
+results/**/*.pt
+results/**/*.pkl
+results/**/*.npy
+results/**/*.npz
+
+# ------------------------------------------------------------------------------
+# NumPy Serialized Arrays & Numerical Tensors
+# ------------------------------------------------------------------------------
+*.npy
+*.npz
+
+# ------------------------------------------------------------------------------
+# Large Results, Training Logs, & Intermediate Phase Artifacts (~5.9 GB)
+# ------------------------------------------------------------------------------
+results/
+outputs/
+PROFESSOR_FINAL_RESULTS/
+FINAL_REVIEW_2026_11_16/
+*.log
+*.tmp
+*.temp
+
+# ------------------------------------------------------------------------------
+# Confidential / Raw Experimental Data & Matrices
+# ------------------------------------------------------------------------------
+# Raw macrographs, scanned cross-sections, and proprietary parameter matrices
+data/processed/
+data/*.csv
+data/*.xlsx
+*.xlsx
+DATASET_INTEGRITY_REPORT.csv
+temp_*.csv
+tmp_*.csv
+
+# Redundant text file duplicates (tracked via .tex equivalents)
+ppt.txt
+report.txt
+
+# Allow data README and schema template
+!data/README.md
+!data/sample_parameters_template.csv
+
+# ------------------------------------------------------------------------------
+# Large Archives, Presentation Binaries, & Generated PDFs
+# ------------------------------------------------------------------------------
+*.zip
+*.tar
+*.tar.gz
+*.gz
+*.rar
+*.7z
+*.pptx
+*.pdf
+phase_v10_sync_bundle.tar.gz
+phase_v13_bundle.tar.gz
+
+# ------------------------------------------------------------------------------
+# Server Sync Scripts (Internal Infrastructure with Hardcoded Paths)
+# ------------------------------------------------------------------------------
+sync_to_server.*
+sync_results_from_server.*
+sync_to_server_v13.*
+sync_results_from_server_v13.*
+
+# ------------------------------------------------------------------------------
+# Local Review Batch Scripts & Intermediate Meeting Notes
+# ------------------------------------------------------------------------------
+*.bat
+*.ps1
+LAST_MINUTE_SCIENTIFIC_CORRECTIONS.md
+PHASE_V10_A100_EXECUTION_GUIDE.md
+PHASE_V13_A100_EXECUTION_GUIDE.md
+PROJECT_AUDIT_REPORT.md
+
+# ------------------------------------------------------------------------------
+# Historical Root Scratch / Intermediate Exploration Scripts
+# ------------------------------------------------------------------------------
+cfg_and_denoising_test.py
+check_v3_shapes.py
+combine_yaskawa_mlp_bnn.py
+create_image_metadata.py
+create_l27_metadata.py
+evaluate_phase10_v3c.py
+evaluate_phase9_v3c.py
+evaluate_v3.py
+final_diagnostic_verification.py
+find_reconciliation.py
+generate_predict_scripts.py
+image_audit.py
+independent_denoising_check.py
+interpolation_experiment.py
+launch_full_v3.py
+predict_yaskawa_100_bnn.py
+predict_yaskawa_100_mlp.py
+recompute_phase11_audit.py
+reconcile_check.py
+reconcile_full.py
+run_all_v3.py
+run_phase8_physical_validation.py
+test_recovery.py
+train_phase10_v3c.py
+train_phase9_v3c.py
+v3_tensor_check.py
+verify_roi.py
+
+# ------------------------------------------------------------------------------
+# OS & Editor Artifacts
+# ------------------------------------------------------------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+*.blf
+*.regtrans-ms
+*.regtrans-ms.cnpf
+NTUSER*
+ntuser*
+.vscode/
+.idea/
+*.swp
+*.swo

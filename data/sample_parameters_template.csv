@@ -1,0 +1,6 @@
+sample,material,process,feed_rate,speed,HIP,efficiency,width,depth,reinforcement
+1,IN718,ColdArc,5.0,20.0,139.08,83.45,4.52,1.46,3.79
+2,IN718,ColdArc,5.5,20.0,154.20,83.45,10.76,1.77,4.09
+3,IN718,ColdArc,5.0,25.0,111.26,83.45,4.88,1.22,3.31
+4,IN718,ColdArc,5.5,25.0,123.36,83.45,5.80,1.35,3.64
+5,IN718,ColdArc,6.0,25.0,135.46,83.45,6.72,1.48,3.97
